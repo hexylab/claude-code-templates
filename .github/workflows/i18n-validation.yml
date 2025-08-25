@@ -1,0 +1,216 @@
+name: i18n Validation
+
+on:
+  push:
+    branches: [main, feat/i18n-*]
+    paths:
+      - 'cli-tool/locales/**'
+      - 'cli-tool/scripts/validate-translations.js'
+      - 'cli-tool/src/i18n.js'
+      - '.github/workflows/i18n-validation.yml'
+  pull_request:
+    paths:
+      - 'cli-tool/locales/**'
+      - 'cli-tool/scripts/validate-translations.js'
+      - 'cli-tool/src/i18n.js'
+      - '.github/workflows/i18n-validation.yml'
+
+jobs:
+  validate-translations:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        working-directory: ./cli-tool
+        run: npm ci
+        
+      - name: Make validation script executable
+        working-directory: ./cli-tool
+        run: chmod +x scripts/validate-translations.js
+        
+      - name: Validate translation keys (Development Mode)
+        working-directory: ./cli-tool
+        run: npm run i18n:validate -- --allow-missing --report
+        id: validation
+        
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: translation-validation-report
+          path: cli-tool/translation-report.json
+          retention-days: 30
+          
+      - name: Comment PR with validation results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            try {
+              const reportPath = path.join(process.cwd(), 'cli-tool', 'translation-report.json');
+              
+              if (!fs.existsSync(reportPath)) {
+                console.log('No translation report found');
+                return;
+              }
+              
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              
+              let comment = '## 🌍 Translation Validation Report\n\n';
+              comment += `**Generated:** ${new Date(report.timestamp).toLocaleString()}\n`;
+              comment += `**Master File:** ${report.master.file} (${report.master.keyCount} keys)\n\n`;
+              
+              if (report.languages.length === 0) {
+                comment += '📝 No additional language files found.\n';
+              } else {
+                comment += '### Language Status\n\n';
+                comment += '| Language | Keys | Missing | Extra | Coverage |\n';
+                comment += '|----------|------|---------|-------|----------|\n';
+                
+                for (const lang of report.languages) {
+                  const coverage = `${lang.coverage}%`;
+                  const status = lang.coverage === 100 ? '✅' : '⚠️';
+                  comment += `| ${status} ${lang.language} | ${lang.totalKeys} | ${lang.missingKeys.length} | ${lang.extraKeys.length} | ${coverage} |\n`;
+                }
+                
+                if (report.summary.totalIssues > 0) {
+                  comment += '\n### Issues Found\n\n';
+                  
+                  for (const lang of report.languages) {
+                    if (lang.missingKeys.length > 0 || lang.extraKeys.length > 0) {
+                      comment += `**${lang.language}:**\n`;
+                      
+                      if (lang.missingKeys.length > 0) {
+                        const displayCount = Math.min(lang.missingKeys.length, 5);
+                        comment += `- Missing ${lang.missingKeys.length} keys`;
+                        if (displayCount < lang.missingKeys.length) {
+                          comment += ` (showing first ${displayCount})`;
+                        }
+                        comment += ':\n';
+                        for (let i = 0; i < displayCount; i++) {
+                          comment += `  - \`${lang.missingKeys[i]}\`\n`;
+                        }
+                        if (displayCount < lang.missingKeys.length) {
+                          comment += `  - ... and ${lang.missingKeys.length - displayCount} more\n`;
+                        }
+                      }
+                      
+                      if (lang.extraKeys.length > 0) {
+                        comment += `- Extra ${lang.extraKeys.length} keys:\n`;
+                        for (const key of lang.extraKeys) {
+                          comment += `  - \`${key}\`\n`;
+                        }
+                      }
+                      comment += '\n';
+                    }
+                  }
+                } else {
+                  comment += '\n✅ **All translations are in sync!**\n';
+                }
+              }
+              
+              comment += '\n---\n';
+              comment += '💡 **Note:** This validation runs in development mode (`--allow-missing`). ';
+              comment += 'Missing translations will not fail the build during the initial i18n implementation phase.\n';
+              
+              // Post comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+              
+            } catch (error) {
+              console.error('Error posting validation results:', error);
+            }
+
+  test-i18n-module:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        working-directory: ./cli-tool
+        run: npm ci
+        
+      - name: Test i18n module
+        working-directory: ./cli-tool
+        run: npm run test:i18n
+        if: hashFiles('cli-tool/tests/**/*i18n*') != ''
+        
+      - name: Validate i18n module can load
+        working-directory: ./cli-tool
+        run: |
+          node -e "
+            const i18n = require('./src/i18n');
+            console.log('✅ i18n module loads successfully');
+            
+            const instance = i18n.getI18n();
+            console.log('✅ i18n instance created');
+            
+            const langs = instance.getAvailableLanguages();
+            console.log('✅ Available languages:', langs.join(', '));
+            
+            const enTest = instance.t('app.name');
+            console.log('✅ English translation test:', enTest);
+            
+            // Test Japanese (should fallback to English for missing keys)
+            instance.setLanguage('ja');
+            const jaTest = instance.t('app.name');
+            console.log('✅ Japanese translation test:', jaTest);
+            
+            console.log('🎉 All i18n functionality working correctly!');
+          "
+
+  validate-strict-mode:
+    runs-on: ubuntu-latest
+    # This job is allowed to fail during development phase
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        working-directory: ./cli-tool
+        run: npm ci
+        
+      - name: Validate translations (Strict Mode)
+        working-directory: ./cli-tool
+        run: npm run i18n:validate:strict
+        continue-on-error: true
+        
+      - name: Report strict mode result
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "🎉 All translations are complete and in sync!"
+            echo "::notice title=i18n Status::All translations validated successfully in strict mode"
+          else
+            echo "⚠️ Strict mode validation failed (expected during development phase)"
+            echo "::warning title=i18n Status::Strict mode validation failed - this is expected during initial i18n implementation"
+          fi

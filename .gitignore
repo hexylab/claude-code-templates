@@ -11,3 +11,9 @@ coverage
 .vscode
 .vscode/*
 .env*.local
+.serena
+.claude
+
+# i18n reports and temporary files
+translation-report.json
+cli-tool/translation-report.json

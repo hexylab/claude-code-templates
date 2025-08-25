@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "name": "English",
+    "nativeName": "English",
+    "direction": "ltr",
+    "completeness": 100
+  },
+  "app": {
+    "name": "Claude Code Templates",
+    "version": "Version {version}",
+    "description": "Ready-to-use configurations for Anthropic's Claude Code"
+  },
+  "menu": {
+    "analytics": "Analytics Dashboard",
+    "analytics_description": "Monitor your Claude Code usage and sessions",
+    "chats": "Chats Mobile", 
+    "chats_description": "AI-first mobile interface for conversations",
+    "agents": "Agents Dashboard",
+    "agents_description": "View and analyze Claude conversations with agent tools",
+    "setup": "Project Setup",
+    "setup_description": "Configure Claude Code for your project",
+    "health": "Health Check",
+    "health_description": "Verify your Claude Code setup and configuration"
+  },
+  "actions": {
+    "launching": "Launching {feature}...",
+    "running": "Running {action}...",
+    "starting": "Starting {service}...",
+    "setting_up": "Setting up Claude Code configuration...",
+    "cancelled": "Setup cancelled by user.",
+    "completed": "Setup complete!"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "success": "Success"
+  },
+  "validation": {
+    "not_available": "{language} is not available yet. Coming soon!",
+    "available_languages": "Available languages: {languages}",
+    "tunnel_error": "Error: --tunnel can only be used with --analytics, --chats, or --chats-mobile",
+    "examples": "Examples:"
+  },
+  "setup": {
+    "target_directory": "Target directory: {directory}",
+    "dry_run": "Dry run - showing what would be copied:",
+    "next_steps": "Next steps:",
+    "review_file": "Review the generated CLAUDE.md file",
+    "customize_config": "Customize the configuration for your project", 
+    "start_using": "Start using Claude Code with: claude",
+    "view_templates": "View all available templates at: https://aitmpl.com/",
+    "read_docs": "Read the complete documentation at: https://docs.aitmpl.com/"
+  },
+  "features": {
+    "language_specific": "Language-specific features for {language} have been configured",
+    "framework_specific": "Framework-specific commands for {framework} are available",
+    "hooks_configured": "{count} automation hooks have been configured",
+    "mcps_configured": "{count} MCP servers have been configured"
+  }
+}

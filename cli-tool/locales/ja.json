@@ -1,0 +1,12 @@
+{
+  "_comment": "Japanese translations to be added incrementally in future PRs",
+  "_meta": {
+    "name": "Japanese",
+    "nativeName": "日本語",
+    "direction": "ltr",
+    "completeness": 5
+  },
+  "app": {
+    "name": "Claude Code Templates"
+  }
+}
