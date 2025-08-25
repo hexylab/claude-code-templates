@@ -22,12 +22,17 @@
     "test:integration": "jest tests/integration",
     "test:e2e": "jest tests/e2e",
     "test:analytics": "jest --testPathPattern=analytics",
+    "test:i18n": "jest --testPathPattern=i18n",
     "test:commands": "./test-commands.sh",
     "test:detailed": "./test-detailed.sh",
     "test:react": "make test-react",
     "test:vue": "make test-vue",
     "test:node": "make test-node",
     "test:all": "npm run test:coverage && make test",
+    "i18n:validate": "node scripts/validate-translations.js",
+    "i18n:validate:strict": "node scripts/validate-translations.js --strict",
+    "i18n:validate:warn": "node scripts/validate-translations.js --warn-only",
+    "i18n:report": "node scripts/validate-translations.js --report",
     "dev:link": "npm link",
     "dev:unlink": "npm unlink -g claude-code-templates",
     "pretest:commands": "npm run dev:link",
@@ -86,6 +91,8 @@
   "files": [
     "bin/",
     "src/",
+    "locales/",
+    "scripts/",
     "README.md"
   ],
   "devDependencies": {
