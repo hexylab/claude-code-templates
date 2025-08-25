@@ -37,7 +37,16 @@ class I18n {
     if (envLocale) {
       // Extract language code (e.g., 'ja_JP.UTF-8' -> 'ja')
       const langCode = envLocale.split(/[_.-]/)[0].toLowerCase();
-      return langCode;
+      
+      // Handle C and POSIX locales - fallback to English
+      if (langCode === 'c' || langCode === 'posix') {
+        return 'en';
+      }
+      
+      // Validate locale code (should be at least 2 characters)
+      if (langCode.length >= 2) {
+        return langCode;
+      }
     }
 
     // Use OS locale as fallback
